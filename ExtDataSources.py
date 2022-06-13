@@ -11,8 +11,6 @@ from alpha_vantage.timeseries import TimeSeries
 import yfinance as yf
 import numpy as np
 from datetime import datetime, timedelta
-#from ib_insync import *
-#from IBDConnParams import *
 import time
 import requests
 import pandas as pd
@@ -24,6 +22,15 @@ class ExtDataSources(object):
     dContacts = {}
 
     def __init__(self):
+        self.dContacts["LEETRADES"] = {
+                                   "Bryce":"4257375119@tmomail.net",
+                                   "Kevin":"5096305967@vzwpix.com",
+                                   }
+        self.dContacts["LENOVOTHINKPAD"] = {
+                                   "Kenny":"2532088796@vzwpix.com",
+                                   "Kevin":"5096305967@vzwpix.com",
+                                   }
+                                   
         self.dContacts["ALERT"] = {
                                   #"Kevin2":"5096305967@vtext.com",
                                   "Kevin":"5096305967@vzwpix.com",
@@ -41,9 +48,6 @@ class ExtDataSources(object):
         #self.DT = str(datetime.today() - timedelta(days=1)).split(' ')[0] #look for previous day's results option#
         #self.DT = "2020-05-29"   #USE THIS OVERRIDE WHEN RUNNING ON THE WEEKEND#
         self.triggerTime = self.DT + " " + "09:31:00"  #alpha_vantage uses 9:31
-        #self.ib = IB()
-        #self.connParam = IBDConnParams()
-        #self.ib.connect(socket.gethostbyname(socket.gethostname()), self.connParam.getConnPort("PAPER"), clientId=self.connParam.getclientID("GETHISTORIES"))  #Local Trader Workstation Connection
         #print(self.triggerTime)
 
     '''
@@ -195,7 +199,6 @@ class ExtDataSources(object):
     '''
     def getLiveTickerIntraday_values(self, sTicker, sInterval, sOutputSize='compact', sFormat='json', timeout=120, trigger=None):
         ts = TimeSeries(key=os.environ['API_KEY'], output_format=sFormat)
-        #print(os.environ['API_KEY'])
         volume = -1
         SLEEPTIME = 120
         data = None
@@ -205,19 +208,6 @@ class ExtDataSources(object):
         while(data == None and timeout >= 0):
             try:
                 data, meta_data = ts.get_intraday(symbol=sTicker,interval=sInterval,outputsize=sOutputSize)
-                #Use IBData
-                #EquityContract = Stock(symbol=sTicker, exchange='SMART', currency='USD')
-                #self.ib.qualifyContracts(EquityContract)
-                #end_date = datetime.now().strftime('%Y%m%d %H:%M:%S')
-                #bars = self.ib.reqHistoricalData(EquityContract, endDateTime=end_date, durationStr='1 D', barSizeSetting='1 min', whatToShow='TRADES', useRTH=True)
-                #df = util.df(bars)
-                #df['date'] = df['date'].dt.strftime('%Y-%m-%d %H:%M:%S')
-                ##print(df)
-                #data = df
-                #print(data)
-                #if not trigger:
-                #    trigger = self.triggerTime
-                #volume = float(data[trigger]["5. volume"])
                 print("Data received")
             except Exception as detail:
                 print(traceback.print_exc(file=sys.stdout))
@@ -226,11 +216,6 @@ class ExtDataSources(object):
                 time.sleep(SLEEPTIME)
                 timeout = timeout - SLEEPTIME
                 data = None
-            #if volume <= 0 and timeout > 0:
-            #    if timeout > 0:
-            #        time.sleep(SLEEPTIME)
-            #    timeout -= SLEEPTIME
-            #    #print timeout
         #if volume <=0:
         #    print("Hit Timeout without achieving valid data; returning with last query")
         return data, meta_data
@@ -341,21 +326,31 @@ class ExtDataSources(object):
     sMessage = message contents to send to distribution list text.
     '''
     def sendAlertMsg(self, sMessage, email=None, contactList="SUPPORT"):
-        import smtplib
-        username = os.environ.get("EMAIL")
-        password = os.environ.get("PWD")
-        server = smtplib.SMTP('smtp.gmail.com',587)
-        server.starttls()
-        server.login(username,password)
-        if email:
-            self.sendMessage(username, email, sMessage, server)
-        elif contactList and contactList in self.dContacts:
-            for contact,email in six.iteritems(self.dContacts[contactList]):
+        try:
+            import smtplib
+            import ssl
+            username = os.environ.get("EMAIL")
+            password = os.environ.get("PWD")
+            context=ssl.create_default_context()
+            server = smtplib.SMTP('smtp-mail.outlook.com',587)
+            server.starttls(context=context)
+            server.login(username,password)
+            if email:
                 self.sendMessage(username, email, sMessage, server)
-        else:
-            for contact,email in six.iteritems(self.dContacts["SUPPORT"]):
-                self.sendMessage(username, email, sMessage, server)
-        server.quit()
+            elif contactList and contactList in self.dContacts:
+                sMessage = "%s: %s"%(contactList,sMessage)
+                for contact,email in six.iteritems(self.dContacts[contactList]):
+                    self.sendMessage(username, email, sMessage, server)
+            else:
+                sMessage = "%s: %s"%("SUPPORT",sMessage)
+                for contact,email in six.iteritems(self.dContacts["SUPPORT"]):
+                    self.sendMessage(username, email, sMessage, server)
+            server.quit()
+        except Exception as detail:
+            print(detail)
+            print(traceback.format_exc())
+            print("Failed to send alert, we need a backup!")
+            print("Failed Message: %s"%sMessage)
 
     def sendMessage(self, username, email, sMessage, server):
         msg = 'Subject: {}\n\n{}'.format("Stock Alert",sMessage)
