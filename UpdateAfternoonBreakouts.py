@@ -1,12 +1,15 @@
 import os
+import sys
 import six
 from datetime import datetime
 import ExtDataSources
 import xlrd
+import traceback
 from xlrd import open_workbook
 from xlwt import Workbook
 from xlutils.copy import copy
 import yfinance as yf
+from polygon import RESTClient
 from GetStockRank import GetStockRank
 from GetTargetStop import GetTargetStop
 import openpyxl
@@ -21,6 +24,7 @@ class EODAnalysis(object):
     def __init__(self):
         self.gsr = GetStockRank()
         self.gts = GetTargetStop()
+        self.client = RESTClient()
 
     def GetSavedData(self,Ticker):
         data = {}
@@ -230,9 +234,12 @@ class EODAnalysis(object):
                 if Hod == "" or float(BO_Gap) < REQUIRED_BO_LEVEL:
                     #Request Alpha_vantage Data
                     print(Ticker, Hod, tDate)
-                    YahooInfo = yf.Ticker(Ticker)
-                    if "floatShares" in YahooInfo.info:
-                        Sharefloat = int(YahooInfo.info["floatShares"])
+                    #if "floatShares" in YahooInfo.info and YahooInfo.info["floatShares"] is not None:
+                    try:
+                        #YahooInfo = yf.Ticker(Ticker)
+                        #Sharefloat = int(YahooInfo.info["floatShares"])
+                        PolygonInfo = self.client.get_ticker_details(Ticker)
+                        Sharefloat = PolygonInfo.weighted_shares_outstanding
                         tHOD_Initial,tHOD_Break,Breakout_Level,Breakout_Volume,tHOD,dayHigh,tDrawdown_Max,Drawdown,Close,PrevClose = self.ProcessAlphVantageData(Ticker,tDate)
                         if tHOD_Initial: #If Valid Data back From ALPHA
                             #ws.write(row_idx,0,"Date")
@@ -272,7 +279,9 @@ class EODAnalysis(object):
                             #ws.write(row_idx,19,"Options")
                             #ws.write(row_idx,20,"Strike")
                             wb.save(os.environ["AFTERNOONBOTRACKING"])
-                    else:
+                    except Exception as detail:
+                        print(detail)
+                        print(traceback.print_exc(file=sys.stdout))
                         print("Yahoo Finance Missing Critical Data To Analyze, Stock ignored")
                         
                 elif PrevClose == "":

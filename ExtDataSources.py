@@ -200,7 +200,7 @@ class ExtDataSources(object):
     def getLiveTickerIntraday_values(self, sTicker, sInterval, sOutputSize='compact', sFormat='json', timeout=120, trigger=None):
         ts = TimeSeries(key=os.environ['API_KEY'], output_format=sFormat)
         volume = -1
-        SLEEPTIME = 120
+        SLEEPTIME = 70
         data = None
         meta_data = None
         if sTicker in ["^DJIA"]:  #These indexes don't seem to return data in the first minute.

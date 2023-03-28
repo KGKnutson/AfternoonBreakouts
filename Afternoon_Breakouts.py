@@ -12,6 +12,9 @@ from xlrd import open_workbook
 from xlwt import Workbook
 from xlutils.copy import copy
 import yfinance as yf
+#from polygon import RESTClient
+from ib_insync import *
+import xml.etree.ElementTree as ET
 
 DEFAULT_THOD = "9:00:00"
 
@@ -20,6 +23,19 @@ class screener(object):
 
     def __init__(self):
         self.gsr = GetStockRank()
+        self.ib = IB()
+        self.ib.connect()
+        #self.client = RESTClient()
+
+    def get_top_percent_gainers_from_IB(self):
+        sub = ScannerSubscription(instrument='STK', locationCode='STK.US.MAJOR', scanCode='TOP_PERC_GAIN')
+        tagValues = [
+            TagValue("changePercAbove", "20"),
+            TagValue("volumeAbove", "500000")
+            ]
+        scanData = self.ib.reqScannerData(sub, [], tagValues)
+        for stock in scanData:
+            print(stock.contractDetails.contract.symbol)
 
     def write_to_file(self, ticker, df, timeOfDay):
         print("Updating workbook")
@@ -121,7 +137,7 @@ class screener(object):
                             print("Probably an acquisition... < 5%difference from day low to day high")
                         else:
                             df.loc[df['Ticker']==ticker,'Buy'] = True
-                            extDataSources.sendAlertMsg("Buy %s at $%.2f"%(ticker,df.loc[df['Ticker']==ticker, 'HOD'].values[0]))
+                            #extDataSources.sendAlertMsg("Buy %s at $%.2f"%(ticker,df.loc[df['Ticker']==ticker, 'HOD'].values[0])) #Turned off alerts for now
                             #Save Stock To Separate List of in play stocks#
                             self.write_to_file(ticker, df, timeOfDay)
                 df.loc[df['Ticker']==ticker,'HOD'] = float(tickerData["regularMarketDayHigh"])
@@ -154,7 +170,23 @@ class screener(object):
             float = self.convert_shorthand_to_Number(float)
             df.loc[df['Ticker']==ticker,'Rank'] = int(self.gsr.getStockRank(float,marketCap))
         return df
-            
+
+    def getFloatLast(self, ticker):
+        contract = Stock(symbol=ticker, exchange='SMART', currency='USD')
+        fundamentals = self.ib.reqFundamentalData(contract, 'ReportSnapshot', fundamentalDataOptions=[])
+        root = ET.fromstring(fundamentals)
+        floatShares = 0
+        for child1 in root:
+            if child1.tag=="CoGeneralInfo":
+                for child2 in child1:
+                    if child2.tag=="SharesOut":
+                        floatShares = int(float(child2.attrib['TotalFloat']))
+                        print(floatShares)
+        ticker = self.ib.reqMktData(contract)
+        self.ib.sleep(1)
+        regularMarketPrice = ticker.last
+        print(floatShares, regularMarketPrice)
+        return(floatShares,regularMarketPrice)
 
 if __name__ == "__main__":
     screener = screener()
@@ -184,13 +216,20 @@ if __name__ == "__main__":
         for ticker in tables111['Ticker']:      #Add Float to columns
             try:
                 print("Adding float for %s"%ticker)
-                YahooInfo = yf.Ticker(ticker)
-                tables111.loc[tables111['Ticker']==ticker,'Float'] = str(round(float(YahooInfo.info["floatShares"])/1000000,1))+"M"
-                InitialMarketCap = int(float(YahooInfo.info["floatShares"])*float(YahooInfo.info["regularMarketPrice"]))
+                #YahooInfo = yf.Ticker(ticker)
+                #PolygonInfo = screener.client.get_ticker_details(ticker)
+                #floatShares = float(YahooInfo.info["floatShares"])
+                #InitialMarketCap = int(floatShares*float(YahooInfo.info["regularMarketPrice"]))
+                #floatShares = float(PolygonInfo.weighted_shares_outstanding)
+                floatShares, regularMarketPrice = screener.getFloatLast(ticker)
+                InitialMarketCap = int(floatShares*float(regularMarketPrice))
+                #InitialMarketCap = int(PolygonInfo.market_cap)
+                tables111.loc[tables111['Ticker']==ticker,'Float'] = str(round(floatShares/1000000,1))+"M"
                 tables111.loc[tables111['Ticker']==ticker,'Market Cap'] = str(round(InitialMarketCap/1000000,1))+"M"
             except Exception as detail:
                 print("Exception thrown trying to add Float data")
                 print(detail)
+                print(traceback.print_exc(file=sys.stdout))
                 print("Dropping Ticker %s"%ticker)
                 tables111.drop(tables111[tables111['Ticker']==ticker].index, inplace = True)
                 #tables111.loc[tables111['Ticker']==ticker,'Float'] = "-1M"
@@ -207,24 +246,32 @@ if __name__ == "__main__":
         
         while(marketState=="REGULAR"):
             try:
+                print("Sleeping 30 seconds")
                 time.sleep(30)
                 tables111 = extDataSources.get_screener('111')
                 if tables111 is not None:
                     for ticker in tables111['Ticker']:
-                        YahooInfo = yf.Ticker(ticker)
+                        #YahooInfo = yf.Ticker(ticker)
+                        #PolygonInfo = screener.client.get_ticker_details(ticker)
                         if len(ticker)==5 and ticker[4]=="W":
                             print("Skipping ticker %s because it is a warrant"%ticker)
                         elif "Exchange Traded Fund" in tables111.loc[tables111['Ticker']==ticker,'Industry'].values[0]:
                             print("Skipping ticker %s because it is an ETF"%ticker)
                         elif ticker not in df['Ticker'].tolist():
-                            if YahooInfo.info["floatShares"]:  #Validate that Float Exists in Yahoo Finance
+                            try:
+                                #YahooFloat = float(YahooInfo.info["floatShares"])
+                                #YahooFloat = float(PolygonInfo.weighted_shares_outstanding)
+                                YahooFloat, regularMarketPrice = screener.getFloatLast(ticker)
+                                InitialMarketCap = int(floatShares*float(regularMarketPrice))
                                 print("append new ticker %s to df table"%ticker)
                                 print(tables111.loc[tables111['Ticker']==ticker])
                                 df = pd.concat([df, tables111.loc[tables111['Ticker']==ticker]])
-                                df.loc[df['Ticker']==ticker,'Float'] = str(round(float(YahooInfo.info["floatShares"])/1000000,1))+"M"
-                                InitialMarketCap = int(float(YahooInfo.info["floatShares"])*float(YahooInfo.info["regularMarketPrice"]))
+                                df.loc[df['Ticker']==ticker,'Float'] = str(round(YahooFloat/1000000,1))+"M"
+                                InitialMarketCap = int(YahooFloat*float(regularMarketPrice))
                                 df.loc[df['Ticker']==ticker,'Market Cap'] = str(round(InitialMarketCap/1000000,1))+"M"
-                            else:
+                            except Exception as detail:
+                                print(detail)
+                                print(traceback.print_exc(file=sys.stdout))
                                 print("Skipping ticker %s because Yahoo Finance is missing Float"%ticker)
                 else:
                     print("Failed to get Finviz Data during last cycle")
