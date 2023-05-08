@@ -1,0 +1,118 @@
+{
+    "clientId": {
+        "DEVELOPMENT": 1,
+        "strategy1": 2,
+        "TWSALIVECHECK": 3,
+        "IBDINTEGRITY": 4,
+        "OPTIONBACKUPQQQ": 5,
+        "OPTIONBACKUPSPY": 6,
+        "OPTIONBACKUPTSLA": 7,
+        "EVOLVEDTRADER": 8,
+        "TWSRESTARTCHECK": 9,
+        "strategy2": 10,
+        "strategy10": 11,
+        "strategy4": 12,
+        "strategy3": 13,
+        "strategy14": 14,
+        "strategy5": 15,
+        "afternoonbreakouts": 30,
+        "afternoonbreakoutstracker": 31
+    },
+    "connPort": {
+        "PAPER": 7497,
+        "CASH": 7496
+    },
+    "RPCHost": {
+                "strategy1": {"IB_DATA_HOST_PROGRAM": "strategy1_lenovothinkpad",
+                              "RPC_SERVER_IP"       : "192.168.1.9"
+                             },
+                "strategy2": {"IB_DATA_HOST_PROGRAM": "strategy1_lenovothinkpad",
+                              "RPC_SERVER_IP"       : "192.168.1.9"
+                             },
+                "strategy3": {"IB_DATA_HOST_PROGRAM": "strategy3_lenovothinkpad",
+                              "RPC_SERVER_IP"       : "192.168.1.9"
+                             },
+                "strategy4": {"IB_DATA_HOST_PROGRAM": "strategy4_lenovothinkpad",
+                              "RPC_SERVER_IP"       : "192.168.1.9"
+                             },
+                "strategy5": {"IB_DATA_HOST_PROGRAM": "strategy5_wakeboard",
+                              "RPC_SERVER_IP"       : "192.168.1.9"
+                             },
+                "strategy10": {"IB_DATA_HOST_PROGRAM": "strategy14_lenovothinkpad",
+                              "RPC_SERVER_IP"       : "192.168.1.9"
+                             },
+                "strategy14": {"IB_DATA_HOST_PROGRAM": "strategy14_lenovothinkpad",
+                              "RPC_SERVER_IP"       : "192.168.1.9"
+                             },
+                "afternoonbreakouts": {"IB_DATA_HOST_PROGRAM": "afternoonbreakouts_lenovothinkpad",
+                              "RPC_SERVER_IP"       : "192.168.1.9"
+                             }
+                },
+    "heartbeatCheckers": [
+        "heartbeat_lenovothinkpad",
+        "twsChecker_lenovothinkpad",
+        "winlocked_lenovothinkpad",
+        "msgProcessing_lenovothinkpad",
+        "heartbeat_leetrades2"
+    ],
+    "investmentSize": {
+        "strategy1_wakeboard":       1000,
+        "strategy1_lenovothinkpad":  500,
+        "strategy1_lenovo":          1000,
+        "strategy1_leetrades":       1000,
+        "strategy1_leetrades2":      1000,
+        "strategy2_leetrades2":      1000,
+        "strategy2_lenovothinkpad":  1000,
+        "strategy2_wakeboard":       1000,
+        "strategy3_leetrades2":      1000,
+        "strategy3_lenovothinkpad":  0,
+        "strategy3_wakeboard":       1000,
+        "strategy4_leetrades2":      500,
+        "strategy4_lenovothinkpad":  500,
+        "strategy4_wakeboard":       500,
+        "strategy4_lenovo":          500,
+        "strategy5_leetrades2":      500,
+        "strategy5_lenovothinkpad":  500,
+        "strategy5_wakeboard":       0,
+        "strategy5_lenovo":          500,
+        "strategy10_leetrades2":     1000,
+        "strategy10_lenovothinkpad": 1000,
+        "strategy10_wakeboard":      1000,
+        "strategy14_leetrades2":     1000,
+        "strategy14_lenovothinkpad": 1000,
+        "strategy14_wakeboard":      1000,
+        "afternoonbreakouts_wakeboard":      0,
+        "afternoonbreakouts_lenovothinkpad": 500,
+        "afternoonbreakouts_leetrades2":     500,
+        "afternoonbreakouts_lenovo":         500,
+        "DEFAULT":                   0
+        },
+    "maxDelays": {
+        "heartbeat":    120,
+        "strategy1":    60,
+        "strategy2":    60,
+        "strategy3":    60,
+        "strategy4":    60,
+        "strategy5":    60,
+        "strategy10":   60,
+        "strategy14":   60,
+        "AfternoonBreakouts":   60,
+        "winlocked":    3700,
+        "msgProcessing":120,
+        "twsChecker":   3700
+        },
+    "operationHours": {
+        "winlocked": {"B4MRKT":9.5,"AFTRMRKT": 0.0},
+        "strategy1": {"B4MRKT":-0.02,"AFTRMRKT": 0.0},
+        "strategy2": {"B4MRKT":-0.02,"AFTRMRKT": 0.0},
+        "strategy3": {"B4MRKT":-0.02,"AFTRMRKT": 0.0},
+        "strategy4": {"B4MRKT":-0.02,"AFTRMRKT": 0.0},
+        "strategy5": {"B4MRKT":-0.02,"AFTRMRKT": 0.0},
+        "strategy10": {"B4MRKT":-0.02,"AFTRMRKT": 0.0},
+        "strategy14": {"B4MRKT":-0.02,"AFTRMRKT": 0.0},
+        "AfternoonBreakouts": {"B4MRKT":-0.02,"AFTRMRKT": 0.0},
+        "twsChecker": {"B4MRKT":1.5,"AFTRMRKT": 1.0},
+        "msgProcessing": {"B4MRKT":9.5,"AFTRMRKT": 8.0},
+        "heartbeat": {"B4MRKT":9.5,"AFTRMRKT": 1.0}
+        }
+}

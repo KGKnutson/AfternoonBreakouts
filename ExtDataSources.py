@@ -6,6 +6,7 @@ import traceback
 import socket
 #import urllib.request
 import urllib
+from urllib.request import urlopen
 import json
 from alpha_vantage.timeseries import TimeSeries
 import yfinance as yf
@@ -230,18 +231,20 @@ class ExtDataSources(object):
                 if six.PY2:
                     f = urllib.urlopen(link)
                     myfile = f.read()
+                    response_json = json.loads(myfile)
                 if six.PY3:
-                    with urllib.request.urlopen(link) as url:
-                        myfile = url.read()
+                    response = urlopen(link)
+                    response_json = json.loads(response.read())
                     #print("Looking up ticker %s"%ticker)
                     #print(myfile)
-                response_json = json.loads(myfile)
+                #response_json = json.loads(myfile)
             except Exception as detail:
-                attempts = attempts + 1
                 print(detail)
                 print(traceback.print_exc(file=sys.stdout))
-                time.sleep(1)
+                time.sleep(2)
                 print("Exception thrown getting marketState from web query; attempt %d"%attempts)
+                attempts = attempts + 1
+                response_json = None
         if response_json:
             return response_json['quoteResponse']['result'][0]
         else:

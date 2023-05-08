@@ -12,6 +12,7 @@ from xlrd import open_workbook
 from xlwt import Workbook
 from xlutils.copy import copy
 import yfinance as yf
+from bs4 import BeautifulSoup
 #from polygon import RESTClient
 from ib_insync import *
 import xml.etree.ElementTree as ET
@@ -20,22 +21,79 @@ DEFAULT_THOD = "9:00:00"
 
 class screener(object):
     gsr = None
+    contractDict = {}
+    symbolIgnoreList = []
 
-    def __init__(self):
+    def __init__(self, clientID=1):
         self.gsr = GetStockRank()
         self.ib = IB()
-        self.ib.connect()
+        self.ib.connect(clientId=clientID)
         #self.client = RESTClient()
 
-    def get_top_percent_gainers_from_IB(self):
+    def run_IB_top_percent_scanner(self):
         sub = ScannerSubscription(instrument='STK', locationCode='STK.US.MAJOR', scanCode='TOP_PERC_GAIN')
         tagValues = [
             TagValue("changePercAbove", "20"),
             TagValue("volumeAbove", "500000")
             ]
         scanData = self.ib.reqScannerData(sub, [], tagValues)
+        return(scanData)
+
+    def get_tHOD_from_IB_top_percent_scanner(self, currentTime=None):
+        #initialize
+        TopPercentGainers = {}
+        end_date          = datetime.now().strftime('%Y%m%d %H:%M:%S')
+        if currentTime:
+            end_date          = currentTime.strftime('%Y%m%d %H:%M:%S')
+        barSizeSetting    = "1 min"
+        history           = "1 D"
+        
+        #pull top gainers and get history
+        scanData = self.run_IB_top_percent_scanner()
         for stock in scanData:
-            print(stock.contractDetails.contract.symbol)
+            try:
+                symbol = stock.contractDetails.contract.symbol
+                if symbol not in self.symbolIgnoreList:
+                    self.contractDict[symbol] = stock.contractDetails.contract
+                    eqtybars = self.ib.reqHistoricalData(stock.contractDetails.contract, endDateTime=end_date, durationStr=history, barSizeSetting=barSizeSetting, whatToShow='TRADES', useRTH=True)
+                    df = util.df(eqtybars)
+                    dailyHighIdx = df['high'].idxmax()
+                    dailyLowIdx  = df['low'].idxmin()
+                    print(symbol)
+                    #print(df.iloc[dailyHighIdx])
+                    tickerDetails = self.getTickerDetails(symbol,stock.contractDetails.contract)
+                    TopPercentGainers[symbol] = [tickerDetails["floatShares"],
+                                                tickerDetails["regularMarketPrice"],
+                                                tickerDetails["previousClose"],
+                                                df.iloc[dailyHighIdx]['high'],
+                                                df.iloc[dailyLowIdx]['low'],
+                                                df.iloc[dailyHighIdx]['date'].to_pydatetime()
+                                                ]
+            except Exception as detail:
+                print(symbol)
+                print(detail)
+                print(traceback.print_exc(file=sys.stdout))
+                print("Ignoring symbol %s"%symbol)
+                self.symbolIgnoreList.append(symbol)
+        return(TopPercentGainers)
+
+    def get_top_percent_gainers_from_IB(self):
+        scanData = self.run_IB_top_percent_scanner()
+        TopPercentGainers = {}
+        for stock in scanData:
+            try:
+                symbol = stock.contractDetails.contract.symbol
+                if symbol not in self.symbolIgnoreList:
+                    self.contractDict[symbol] = stock.contractDetails.contract
+                    tickerDetails = self.getTickerDetails(symbol,stock.contractDetails.contract)
+                    TopPercentGainers[symbol] = [tickerDetails["floatShares"],tickerDetails["regularMarketPrice"],tickerDetails["previousClose"],tickerDetails["dailyHigh"],tickerDetails["dailyLow"]]
+            except Exception as detail:
+                print(symbol)
+                print(detail)
+                print(traceback.print_exc(file=sys.stdout))
+                print("Ignoring symbol %s"%symbol)
+                self.symbolIgnoreList.append(symbol)
+        return(TopPercentGainers)
 
     def write_to_file(self, ticker, df, timeOfDay):
         print("Updating workbook")
@@ -171,28 +229,47 @@ class screener(object):
             df.loc[df['Ticker']==ticker,'Rank'] = int(self.gsr.getStockRank(float,marketCap))
         return df
 
-    def getFloatLast(self, ticker):
-        contract = Stock(symbol=ticker, exchange='SMART', currency='USD')
+    def getTickerDetails(self, ticker, contract=None):
+        if contract is None:
+            if ticker in self.contractDict.keys():
+                contract = self.contractDict[ticker]
+            else:
+                contract = Stock(symbol=ticker, exchange='SMART', currency='USD')
         fundamentals = self.ib.reqFundamentalData(contract, 'ReportSnapshot', fundamentalDataOptions=[])
-        root = ET.fromstring(fundamentals)
-        floatShares = 0
+        #print(fundamentals)
+        root = None
+        try:
+            root = ET.fromstring(fundamentals)
+        except Exception as details:
+            print(fundamentals)
+            raise Exception('invalid fundamentals') from details
+            
+        tickerDetails = {"floatShares":0}
+        
         for child1 in root:
             if child1.tag=="CoGeneralInfo":
                 for child2 in child1:
                     if child2.tag=="SharesOut":
                         floatShares = int(float(child2.attrib['TotalFloat']))
-                        print(floatShares)
+                        #print(floatShares)
+                        tickerDetails["floatShares"] = floatShares
         ticker = self.ib.reqMktData(contract)
         self.ib.sleep(1)
         regularMarketPrice = ticker.last
-        print(floatShares, regularMarketPrice)
-        return(floatShares,regularMarketPrice)
+        PreviousClose = ticker.close
+        tickerDetails["regularMarketPrice"] = regularMarketPrice
+        tickerDetails["previousClose"]      = PreviousClose
+        tickerDetails["dailyHigh"]          = ticker.high
+        tickerDetails["dailyLow"]           = ticker.low
+        #print(floatShares, regularMarketPrice, PreviousClose)
+        return(tickerDetails)
 
 if __name__ == "__main__":
     screener = screener()
     extDataSources = ExtDataSources.ExtDataSources()
     tables111 = None
     marketState = "REGULAR"
+    ExceptionTickers = []
     while tables111 is None and marketState == "REGULAR":
         tables111 = extDataSources.get_screener('111')  #Keep running until we get some data from finviz
         try:
@@ -221,7 +298,9 @@ if __name__ == "__main__":
                 #floatShares = float(YahooInfo.info["floatShares"])
                 #InitialMarketCap = int(floatShares*float(YahooInfo.info["regularMarketPrice"]))
                 #floatShares = float(PolygonInfo.weighted_shares_outstanding)
-                floatShares, regularMarketPrice = screener.getFloatLast(ticker)
+                tickerDetails = screener.getTickerDetails(ticker)
+                floatShares = tickerDetails["floatShares"]
+                regularMarketPrice = tickerDetails["regularMarketPrice"]
                 InitialMarketCap = int(floatShares*float(regularMarketPrice))
                 #InitialMarketCap = int(PolygonInfo.market_cap)
                 tables111.loc[tables111['Ticker']==ticker,'Float'] = str(round(floatShares/1000000,1))+"M"
@@ -232,6 +311,7 @@ if __name__ == "__main__":
                 print(traceback.print_exc(file=sys.stdout))
                 print("Dropping Ticker %s"%ticker)
                 tables111.drop(tables111[tables111['Ticker']==ticker].index, inplace = True)
+                ExceptionTickers.append(ticker)
                 #tables111.loc[tables111['Ticker']==ticker,'Float'] = "-1M"
     
         YahooTableUpdateComplete = False
@@ -257,12 +337,16 @@ if __name__ == "__main__":
                             print("Skipping ticker %s because it is a warrant"%ticker)
                         elif "Exchange Traded Fund" in tables111.loc[tables111['Ticker']==ticker,'Industry'].values[0]:
                             print("Skipping ticker %s because it is an ETF"%ticker)
+                        elif ticker in ExceptionTickers:
+                            print("Skipping ticker %s because it previously threw an exception trying to get float or price"%ticker)
                         elif ticker not in df['Ticker'].tolist():
                             try:
                                 #YahooFloat = float(YahooInfo.info["floatShares"])
                                 #YahooFloat = float(PolygonInfo.weighted_shares_outstanding)
-                                YahooFloat, regularMarketPrice = screener.getFloatLast(ticker)
-                                InitialMarketCap = int(floatShares*float(regularMarketPrice))
+                                tickerDetails = screener.getTickerDetails(ticker)
+                                YahooFloat = tickerDetails["floatShares"]
+                                regularMarketPrice = tickerDetails["regularMarketPrice"]
+                                InitialMarketCap = int(YahooFloat*float(regularMarketPrice))
                                 print("append new ticker %s to df table"%ticker)
                                 print(tables111.loc[tables111['Ticker']==ticker])
                                 df = pd.concat([df, tables111.loc[tables111['Ticker']==ticker]])
@@ -273,6 +357,7 @@ if __name__ == "__main__":
                                 print(detail)
                                 print(traceback.print_exc(file=sys.stdout))
                                 print("Skipping ticker %s because Yahoo Finance is missing Float"%ticker)
+                                ExceptionTickers.append(ticker)
                 else:
                     print("Failed to get Finviz Data during last cycle")
                 df,marketState = screener.yfinance_table_update(df)

@@ -238,7 +238,14 @@ class EODAnalysis(object):
                     try:
                         #YahooInfo = yf.Ticker(Ticker)
                         #Sharefloat = int(YahooInfo.info["floatShares"])
-                        PolygonInfo = self.client.get_ticker_details(Ticker)
+                        PolygonInfo = None
+                        try:
+                            PolygonInfo = self.client.get_ticker_details(Ticker)
+                        except Exception as detail:
+                            print(detail)
+                            print("Sleeping 60 seconds")
+                            time.sleep(60)
+                            PolygonInfo = self.client.get_ticker_details(Ticker)
                         Sharefloat = PolygonInfo.weighted_shares_outstanding
                         tHOD_Initial,tHOD_Break,Breakout_Level,Breakout_Volume,tHOD,dayHigh,tDrawdown_Max,Drawdown,Close,PrevClose = self.ProcessAlphVantageData(Ticker,tDate)
                         if tHOD_Initial: #If Valid Data back From ALPHA

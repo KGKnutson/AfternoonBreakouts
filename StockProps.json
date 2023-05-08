@@ -1,0 +1,17 @@
+{
+    "AFTERNOONBREAKOUTS": {
+        "TRIGGER_MINUTE": {
+            "DEFAULT": {
+                "SAMEDAYEXPIRATION": false,
+                "EARLIEST_BUY_TIME": "7:15:00",
+                "EXPIRATION": 360,
+                "ORDER_TYPE": "LMT",
+                "TRIGGER_DISCOUNT": 0.0,
+                "TARGET": 2.00,
+                "STOP": -0.12,
+                "MAXDAILYBUYS": 5,
+                "EODSELLMINUTESFROMCLOSE": 15
+            }
+        }
+    }
+}
