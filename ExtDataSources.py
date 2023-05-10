@@ -227,7 +227,7 @@ class ExtDataSources(object):
         while((response_json == None) and (attempts <= 120)):
             try:
                 myfile = None
-                link = "https://query2.finance.yahoo.com/v7/finance/quote?symbols=%s"%ticker
+                link = "https://query2.finance.yahoo.com/v6/finance/quote?symbols=%s"%ticker
                 if six.PY2:
                     f = urllib.urlopen(link)
                     myfile = f.read()

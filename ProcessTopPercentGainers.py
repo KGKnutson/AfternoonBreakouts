@@ -169,8 +169,9 @@ class ProcessTopPercentGainers(object):
             else:
                 if attrs[DAILYHIGH] > self.GainersDict[symbol]["dailyHigh"]:
                     #If we meet breakout criteria
-                    if (datetime.now() - self.GainersDict[symbol]["tHOD"]).total_seconds()/60 > self.CONSOLIDATION_TIME:
-                        self.rpcHost.setAfternoonBOAlert(symbol,self.GainersDict[symbol]["dailyHigh"],self.GainersDict[symbol]["rank"])
+                    if (datetime.now() - self.GainersDict[symbol]["tHOD"]).total_seconds()/60 > self.CONSOLIDATION_TIME and not self.GainersDict[symbol]["alertSent"]:
+                        additional_attrs = {"prevClose":self.GainersDict[symbol]["prevClose"]}
+                        self.rpcHost.setAfternoonBOAlert(symbol,self.GainersDict[symbol]["dailyHigh"],self.GainersDict[symbol]["rank"],additional_attrs)
                         self.GainersDict[symbol]["alertSent"] = True
                     self.GainersDict[symbol]["dailyHigh"] = attrs[DAILYHIGH]
                     self.GainersDict[symbol]["tHOD"]      = datetime.now()

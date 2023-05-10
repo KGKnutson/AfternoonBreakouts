@@ -159,7 +159,7 @@ class EODAnalysis(object):
                             print(detail)
                     day_volume += int(value["5. volume"])
                     datetime_object = datetime.strptime(key,"%Y-%m-%d %H:%M:%S")
-                    if premarket and ("09:30:00" in key) or ("09:31:00" in key):  #This is because alpha_vantage morning minutes are not reliable. Hoping for one of these minutes to be present.
+                    if premarket and key.split(" ")[1] in ["09:30:00","09:31:00","09:32:00","09:33:00","09:34:00","09:35:00"]:    #("09:30:00" in key) or ("09:31:00" in key) or ("09:32:00" in key) or ("09:33:00" in key) or ("09:34:00" in key):  #This is because alpha_vantage morning minutes are not reliable. Hoping for one of these minutes to be present.
                         premarket = False
                         tHOD_Initial = datetime_object
                         dayHigh = float(value["2. high"])
