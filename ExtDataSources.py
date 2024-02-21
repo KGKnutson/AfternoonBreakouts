@@ -20,26 +20,7 @@ DEFAULT_THOD = "9:00:00"
 headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.102 Safari/537.36'}
 
 class ExtDataSources(object):
-    dContacts = {}
-
     def __init__(self):
-        self.dContacts["Machine1"] = {
-                                   "Joe":"1234567890@tmomail.net",
-                                   "Vivian":"1234567890@tmomail.net",
-                                   }
-        self.dContacts["Machine2"] = {
-                                   "Stella":"1234567890@tmomail.net",
-                                   "Gabe":"1234567890@tmomail.net",
-                                   }
-                                   
-        self.dContacts["ALERT"] = {
-                                   "Stella":"1234567890@tmomail.net",
-                                   "Vivian":"1234567890@tmomail.net",
-                                  }
-        self.dContacts["SUPPORT"] = {
-                                   "Gabe":"1234567890@tmomail.net",
-                                   "Joe":"1234567890@tmomail.net",
-                                    }
         self.DT = str(datetime.now()).split(' ')[0]
         #self.DT = str(datetime.today() - timedelta(days=1)).split(' ')[0] #look for previous day's results option#
         #self.DT = "2020-05-29"   #USE THIS OVERRIDE WHEN RUNNING ON THE WEEKEND#
@@ -319,38 +300,4 @@ class ExtDataSources(object):
                 timeout -= SLEEPTIME
                 time.sleep(SLEEPTIME)
         return {bull_etf:[bull_volume,bull_close], bear_etf:[bear_volume,bear_close]}
-
-    '''
-    sMessage = message contents to send to distribution list text.
-    '''
-    def sendAlertMsg(self, sMessage, email=None, contactList="SUPPORT"):
-        try:
-            import smtplib
-            import ssl
-            username = os.environ.get("EMAIL")
-            password = os.environ.get("PWD")
-            context=ssl.create_default_context()
-            server = smtplib.SMTP('smtp-mail.outlook.com',587)
-            server.starttls(context=context)
-            server.login(username,password)
-            if email:
-                self.sendMessage(username, email, sMessage, server)
-            elif contactList and contactList in self.dContacts:
-                sMessage = "%s: %s"%(contactList,sMessage)
-                for contact,email in six.iteritems(self.dContacts[contactList]):
-                    self.sendMessage(username, email, sMessage, server)
-            else:
-                sMessage = "%s: %s"%("SUPPORT",sMessage)
-                for contact,email in six.iteritems(self.dContacts["SUPPORT"]):
-                    self.sendMessage(username, email, sMessage, server)
-            server.quit()
-        except Exception as detail:
-            print(detail)
-            print(traceback.format_exc())
-            print("Failed to send alert, we need a backup!")
-            print("Failed Message: %s"%sMessage)
-
-    def sendMessage(self, username, email, sMessage, server):
-        msg = 'Subject: {}\n\n{}'.format("Stock Alert",sMessage)
-        server.sendmail(username, email, msg)
         

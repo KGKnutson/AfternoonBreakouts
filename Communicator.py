@@ -20,53 +20,39 @@ class Communicator(object):
         logFile = os.path.join(os.environ.get("OPTIONTRADERLOGPATH"),"%s_%s.txt"%("Communicator",datetime.now().strftime('%Y%m%d')))
         logging.basicConfig(filename=logFile, filemode='a', format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
         dContacts = {}
-        dContacts["LEETRADES"] = {
-                              #"Kevin":"5096305967@vzwpix.com",
-                              "KevinEmail":"retireconfire@gmail.com",
-                              }
+        dContacts["Machine1"] =       {
+                                        "Joe":"Joe@tmomail.net",
+                                        "Vivian":"Vivian@tmomail.net",
+                                      }
+        dContacts["Machine2"] =       {
+                                        "Stella":"Stella@tmomail.net",
+                                        "Gabe":"Gabe@tmomail.net",
+                                      }
+        dContacts["LEETRADES"] =      {
+                                        "KevinEmail":"retireconfire@gmail.com",
+                                      }
         dContacts["LENOVOTHINKPAD"] = {
-                              #"Kevin":"5096305967@vzwpix.com",
-                              "KevinEmail":"retireconfire@gmail.com",
-                              }
-        dContacts["LENOVO"] = {
-                              #"Kevin":"5096305967@vzwpix.com",
-                              "KevinEmail":"retireconfire@gmail.com",
-                              }
-        dContacts["LEETRADES2"] = {
-                              #"Kevin":"5096305967@vzwpix.com",
-                              "KevinEmail":"retireconfire@gmail.com",
-                              }
-        dContacts["WAKEBOARD"] = {
-                              #"Kenny":"2532088796@vzwpix.com",
-                              #"Kevin":"5096305967@vzwpix.com",
-                              "KevinEmail":"retireconfire@gmail.com",
-                              }
+                                        "KevinEmail":"retireconfire@gmail.com",
+                                      }
+        dContacts["LENOVO"] =         {
+                                        "KevinEmail":"retireconfire@gmail.com",
+                                      }
+        dContacts["LEETRADES2"] =     {
+                                        "KevinEmail":"retireconfire@gmail.com",
+                                      }
+        dContacts["WAKEBOARD"] =      {
+                                        "KevinEmail":"retireconfire@gmail.com",
+                                      }
                               
-        dContacts["ALERT"] = {
-                             #"Kevin2":"5096305967@vtext.com",
-                             #"Kevin":"5096305967@vzwpix.com",
-                             "KevinEmail":"retireconfire@gmail.com",
-                             #"Kenny":"2532088796@vzwpix.com",
-                             #"Eric":"2084779481@vtext.com",
-                             #"Kara":"5096991480@vtext.com",
-                             #"Thomas": "2089948383@text.republicwireless.com"
-                             #"Bryce":"4257375119@tmomail.net"
-                             #"Jenna":"5099542644@vtext.com"
-                             }
-        dContacts["EMERGENCY_HEAT"] = {
-                             #"Kevin":"5096305967@vtext.com",
-                             "KevinEmail":"retireconfire@gmail.com",
-                             #"Mom":"5096681361@vtext.com",
-                             }
-        dContacts["REBOOT_ALERT"] = {
-                             #"Kevin":"5096305967@vtext.com",
-                             "KevinEmail":"retireconfire@gmail.com",
-                             #"Mom":"5096681361@vtext.com",
-                             }
-        dContacts["SUPPORT"] = {
-                                     #"Kevin":"5096305967@vzwpix.com",
-                                     "KevinEmail":"retireconfire@gmail.com",
-                                    }
+        dContacts["ALERT"] =          {
+                                        "KevinEmail":"retireconfire@gmail.com",
+                                      }
+        dContacts["REBOOT_ALERT"] =   {
+                                        "KevinEmail":"retireconfire@gmail.com",
+                                      }
+        dContacts["SUPPORT"] =        {
+                                        "KevinEmail":"retireconfire@gmail.com",
+                                      }
         connParam = IBDConnParams()
         hostTracker = HostTracker(connParam)
         rpcHost = None
