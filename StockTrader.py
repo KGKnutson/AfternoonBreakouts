@@ -195,7 +195,8 @@ class StockTrader(object):
         lastBuyTime = False
         for submittedTime, properties in orderDict.items():
             triggerTime = datetime.strptime(properties["TriggerTime"],'%Y%m%d %H:%M:%S')
-            submittedTime = datetime.strptime(properties["SubmittedDateTime"],'%Y%m%d %H:%M:%S') 
+            submittedTime = datetime.strptime(properties["SubmittedDateTime"],'%Y%m%d %H:%M:%S')
+            symbol = properties["localSymbol"]
             buyDict[properties["localSymbol"]] = {"TRIGGERINDEX": properties["TriggerIndex"],
                         "TRIGGERTIME":  triggerTime,
                         "ORDERSUBMISSIONTIME": submittedTime,
@@ -210,7 +211,7 @@ class StockTrader(object):
                 EquityContract = Stock(symbol=symbol, exchange='SMART', currency='USD')
                 self.ib.qualifyContracts(EquityContract)
                 ContractsDict[symbol] = EquityContract
-                minuteDataDict[symbol] = self.getUnderlyingMarketData(symbol, openTimeSeconds)
+                #minuteDataDict[symbol] = self.getUnderlyingMarketData(symbol, openTimeSeconds)
             except Exception as detail:
                 print("Exception thrown trying to restore dictionary")
                 print(traceback.format_exc())
@@ -289,8 +290,20 @@ class StockTrader(object):
                 Return = Return + (attributeDict["ClosedPrice"] - attributeDict["OpenPrice"])/attributeDict["OpenPrice"]
             BuyQty = BuyQty + 1
         
-        with open(resultsFile, 'a+') as f:
-            f.write("%s,%d,%.2f\n"%(datetime.now().strftime("%Y-%m-%d"),BuyQty,Return))
+        try:
+            with open(resultsFile, 'a+') as f:
+                f.write("%s,%d,%.2f\n"%(datetime.now().strftime("%Y-%m-%d"),BuyQty,Return))
+        except Exception as detail:
+            print(traceback.format_exc())
+            logging.critical(traceback.format_exc())
+            logging.critical(detail)
+        try:
+            self.com.sendMsgToQueue("%s:%s Day's Return: %.02f"%(socket.gethostname(),self.STRATEGY,Return), contactList="SUPPORT")
+        except Exception as detail:
+            print(traceback.format_exc())
+            logging.critical(traceback.format_exc())
+            logging.critical(detail)
+            
 
     def main(self, underlying):
         if not self.marketHoursToday.empty:  #Check to make sure market open today.

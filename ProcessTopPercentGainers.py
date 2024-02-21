@@ -126,8 +126,9 @@ class ProcessTopPercentGainers(object):
                         print("RPCHost must be down")
                     #Sleep until next minute interval
                     firstLoop = False
-                    logging.info("Sleep till next loop")
-                    openTimeSeconds = openTimeSeconds + self.sleep()
+                    #logging.info("Sleep till next loop")
+                    print("Completed Loop at %s"%datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+                    #openTimeSeconds = openTimeSeconds + self.sleep()
 
                     if self.AFTERHOURSDEBUG:
                         currentTime = self.market_open + timedelta(minutes=openTimeSeconds//60)  #Round down to minute

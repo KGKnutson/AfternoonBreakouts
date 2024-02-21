@@ -13,7 +13,6 @@ from xlwt import Workbook
 from xlutils.copy import copy
 import yfinance as yf
 from bs4 import BeautifulSoup
-#from polygon import RESTClient
 from ib_insync import *
 import xml.etree.ElementTree as ET
 
@@ -27,13 +26,20 @@ class screener(object):
     def __init__(self, clientID=1):
         self.gsr = GetStockRank()
         self.ib = IB()
-        self.ib.connect(clientId=clientID)
+        try:
+            self.ib.connect(clientId=clientID)
+        except Exception as detail:
+            print(detail)
+            print("Sleeping 60 seconds")
+            time.sleep(60)
+            self.ib.connect(clientId=clientID)
+            
         #self.client = RESTClient()
 
     def run_IB_top_percent_scanner(self):
         sub = ScannerSubscription(instrument='STK', locationCode='STK.US.MAJOR', scanCode='TOP_PERC_GAIN')
         tagValues = [
-            TagValue("changePercAbove", "20"),
+            TagValue("changePercAbove", "19"),
             TagValue("volumeAbove", "500000")
             ]
         scanData = self.ib.reqScannerData(sub, [], tagValues)

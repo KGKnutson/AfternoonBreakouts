@@ -10,8 +10,8 @@
                 "TRIGGER_DISCOUNT": 0.0,
                 "TARGET": 1.20,
                 "STOP": -0.12,
-                "MAXDAILYBUYS": 5,
-                "EODSELLMINUTESFROMCLOSE": 15
+                "MAXDAILYBUYS": 7,
+                "EODSELLMINUTESFROMCLOSE": 1
             }
         }
     }

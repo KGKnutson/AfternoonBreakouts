@@ -23,27 +23,22 @@ class ExtDataSources(object):
     dContacts = {}
 
     def __init__(self):
-        self.dContacts["LEETRADES"] = {
-                                   "Bryce":"4257375119@tmomail.net",
-                                   "Kevin":"5096305967@vzwpix.com",
+        self.dContacts["Machine1"] = {
+                                   "Joe":"1234567890@tmomail.net",
+                                   "Vivian":"1234567890@tmomail.net",
                                    }
-        self.dContacts["LENOVOTHINKPAD"] = {
-                                   "Kenny":"2532088796@vzwpix.com",
-                                   "Kevin":"5096305967@vzwpix.com",
+        self.dContacts["Machine2"] = {
+                                   "Stella":"1234567890@tmomail.net",
+                                   "Gabe":"1234567890@tmomail.net",
                                    }
                                    
         self.dContacts["ALERT"] = {
-                                  #"Kevin2":"5096305967@vtext.com",
-                                  "Kevin":"5096305967@vzwpix.com",
-                                  "Kenny":"2532088796@vzwpix.com",
-                                  #"Eric":"2084779481@vtext.com",
-                                  #"Kara":"5096991480@vtext.com",
-                                  #"Thomas": "2089948383@text.republicwireless.com"
-                                  #"Bryce":"4257375119@tmomail.net"
-                                  #"Jenna":"5099542644@vtext.com"
+                                   "Stella":"1234567890@tmomail.net",
+                                   "Vivian":"1234567890@tmomail.net",
                                   }
         self.dContacts["SUPPORT"] = {
-                                     "Kevin":"5096305967@vzwpix.com",
+                                   "Gabe":"1234567890@tmomail.net",
+                                   "Joe":"1234567890@tmomail.net",
                                     }
         self.DT = str(datetime.now()).split(' ')[0]
         #self.DT = str(datetime.today() - timedelta(days=1)).split(' ')[0] #look for previous day's results option#
@@ -227,7 +222,7 @@ class ExtDataSources(object):
         while((response_json == None) and (attempts <= 120)):
             try:
                 myfile = None
-                link = "https://query2.finance.yahoo.com/v6/finance/quote?symbols=%s"%ticker
+                link = "https://query2.finance.yahoo.com/v1/finance/quote?symbols=%s"%ticker
                 if six.PY2:
                     f = urllib.urlopen(link)
                     myfile = f.read()
